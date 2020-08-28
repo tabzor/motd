@@ -1,0 +1,59 @@
+#!/bin/sh
+
+PLEX=$(systemctl is-active plexmediaserver.service)
+APACHE=$(systemctl is-active apache2.service)
+MARIA=$(systemctl is-active mariadb.service)
+CPUTEMP=$(sensors | grep ctl | awk '{print $2}')
+Container_ID=88396f9ef4ca
+TRANS=$( docker inspect -f {{.State.Running}} $Container_ID)
+read one five fifteen rest < /proc/loadavg
+RED="\033[1;31m"
+GREEN="\033[1;32m"
+NOCOLOR="\033[0m"
+
+echo "
+___UPTIME
+ `uptime -p`
+ ${one}, ${five}, ${fifteen} avg load
+
+___DISK USAGE
+ `df -h | egrep '(Filesystem)|(/dev/sdc5)|(/dev/md0)'`
+
+___TEMP
+ CPU: ${CPUTEMP} °C
+ HDD: +`hddtemp /dev/sdc5 | awk {'print ($4)'}` °C
+
+___SERVICES
+`if [ $PLEX = "inactive" ]
+then
+echo " Plex Media Server is ${RED}NOT RUNNING${NOCOLOR}."
+else
+echo " Plex Media Server is ${GREEN}RUNNING${NOCOLOR}."
+fi`
+`if [ $TRANS = "true" ]
+then
+echo " Transmission is ${GREEN}RUNNING${NOCOLOR}."
+else
+echo " Transmission is ${RED}NOT RUNNING${NOCOLOR}."
+fi`
+`if [ $APACHE = "inactive" ]
+then
+echo " Apache is ${RED}NOT RUNNING${NOCOLOR}."
+else
+echo " Apache is ${GREEN}RUNNING${NOCOLOR}."
+fi`
+`if [ $MARIA = "inactive" ]
+then
+echo " MariaDB is ${RED}NOT RUNNING${NOCOLOR}."
+else
+echo " MariaDB is ${GREEN}RUNNING${NOCOLOR}."
+fi`
+
+
+___WEATHER
+`ansiweather -h false -p false -w false -a false -l Kiskunlachaza,HU && ansiweather -a false -f 3 -l Kiskunlachaza,HU`
+
+___USERS
+ `who --ips`
+"
+echo
